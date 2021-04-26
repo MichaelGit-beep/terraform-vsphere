@@ -1,31 +1,31 @@
 data "vsphere_datacenter" "datacenter" {
-  name = "${var.vm["datacenter"]}"
+  name = "${var.vsphere["datacenter"]}"
 }
 
 data "vsphere_resource_pool" "pool" {
-  name          = "${var.vm["resource_poolr"]}"
+  name          = "${var.vsphere["resource_pool"]}"
   datacenter_id = "${data.vsphere_datacenter.datacenter.id}"
 }
 
 data "vsphere_datastore" "datastore" {
-  name          = "${var.vm["datastore"]}"
-  datacenter_id = data.vsphere_datacenter.datacenter.id
+  name          = "${var.vsphere["datastore"]}"
+  datacenter_id = "${data.vsphere_datacenter.datacenter.id}"
 }
 
 data "vsphere_network" "network" {
-  name          = "${var.vm["vm_networkr"]}"
-  datacenter_id = data.vsphere_datacenter.datacenter.id
+  name          = "${var.vsphere["vm_network"]}"
+  datacenter_id = "${data.vsphere_datacenter.datacenter.id}"
 }
 
 data "vsphere_virtual_machine" "template" {
-  name          = "${var.vsphere["template_name"]"
-  datacenter_id = "${data.vsphere_datacenter.dc.id}"
+  name          = "${var.vsphere["template_name"]}"
+  datacenter_id = "${data.vsphere_datacenter.datacenter.id}"
 }
 
 resource "vsphere_virtual_machine" "vm" {
   count            = "${var.vm["count"]}"
   name             = "${var.vm["name_prefix"]}${count.index + 1}"
-  resource_pool_id = "${data.vsphere_compute_cluster.cluster.resource_pool_id}"
+  resource_pool_id = "${data.vsphere_resource_pool.pool.id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   folder           = "${var.vm["folder_name"]}"
   num_cpus         = 2
