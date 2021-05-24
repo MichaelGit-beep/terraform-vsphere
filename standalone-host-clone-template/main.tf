@@ -24,15 +24,24 @@ data "vsphere_virtual_machine" "template" {
 
 resource "vsphere_virtual_machine" "vm" {
   count            = "${var.vm["count"]}"
-  name             = "${var.vm["name_prefix"]}${count.index + 1}"
+  name             = "${var.vm["name_prefix"]}${count.index + 2}"
   resource_pool_id = "${data.vsphere_resource_pool.pool.id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   folder           = "${var.vm["folder_name"]}"
   num_cpus         = 2
-  memory           = 4096
+  memory           = 2048
   guest_id         = "${data.vsphere_virtual_machine.template.guest_id}"
   scsi_type        = "${data.vsphere_virtual_machine.template.scsi_type}"
   firmware         = "efi"
+  provisioner "local-exec" {
+    on_failure = continue
+    command = "echo ${vsphere_virtual_machine.vm[count.index].default_ip_address} >> /etc/ansible/inventory"
+  }
+  provisioner "local-exec" {
+    on_failure = continue
+    command = "ansible -i /etc/ansible/inventory all -m win_ping"
+  }
+
 
   network_interface {
     network_id   = "${data.vsphere_network.network.id}"
@@ -48,16 +57,17 @@ resource "vsphere_virtual_machine" "vm" {
 
   clone {
     template_uuid = "${data.vsphere_virtual_machine.template.id}"
+    linked_clone  = true
 
     customize {
       windows_options {
-        computer_name  = "${var.vm["name_prefix"]}${count.index + 1}"
+        computer_name  = "${var.vm["name_prefix"]}${count.index + 2}"
         workgroup      = "${var.vm["workgroup"]}"
         admin_password = "${var.vm["admin_password"]}"
       }
 
       network_interface {
-        ipv4_address = "${var.vm["subnet_prefix"]}${100 + count.index}"
+        ipv4_address = "${var.vm["subnet_prefix"]}${100 + count.index + 2}"
         ipv4_netmask = 24
       }
 
